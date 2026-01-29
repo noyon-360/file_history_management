@@ -12,20 +12,55 @@ import '../../../core/services/hive_storage_service.dart';
 class ScanDocController extends GetxController {
   final _hiveService = HiveStorageService();
   final RxList<ScannedDocument> scannedDocumentsList = <ScannedDocument>[].obs;
+  final RxList<ScannedDocument> filteredDocumentsList = <ScannedDocument>[].obs;
+  final RxString searchQuery = "".obs;
 
   @override
   void onInit() {
     super.onInit();
     loadDocuments();
+
+    // Automatically filter when search query or list changes
+    everAll([scannedDocumentsList, searchQuery], (_) => _filterDocuments());
   }
 
-  void loadDocuments() {
+  Future<void> loadDocuments() async {
     final docsMap = _hiveService.getAllDocuments();
-    scannedDocumentsList.value = docsMap
-        .map((e) => ScannedDocument.fromMap(e))
-        .toList();
-    // Sort by date descending
+    final List<ScannedDocument> allDocs = [];
+
+    for (final e in docsMap) {
+      final doc = ScannedDocument.fromMap(e);
+      // Verify file exists on disk
+      if (await File(doc.filePath).exists()) {
+        allDocs.add(doc);
+      } else {
+        // Cleanup registry if file is missing
+        await _hiveService.deleteDocument(doc.id);
+      }
+    }
+
+    scannedDocumentsList.value = allDocs;
     scannedDocumentsList.sort((a, b) => b.dateTime.compareTo(a.dateTime));
+  }
+
+  void _filterDocuments() {
+    if (searchQuery.isEmpty) {
+      filteredDocumentsList.value = scannedDocumentsList;
+    } else {
+      filteredDocumentsList.value = scannedDocumentsList
+          .where(
+            (doc) => doc.name.toLowerCase().contains(
+              searchQuery.value.toLowerCase(),
+            ),
+          )
+          .toList();
+    }
+  }
+
+  Future<void> toggleFavorite(ScannedDocument doc) async {
+    final updatedDoc = doc.copyWith(isFavorite: !doc.isFavorite);
+    await _hiveService.updateDocument(updatedDoc.toMap());
+    await loadDocuments(); // Refresh list
   }
 
   Future<void> scanDocuments() async {
@@ -48,8 +83,6 @@ class ScanDocController extends GetxController {
 
       if (document.hasPdf && document.pdfBytes != null) {
         await _saveDocument(document.pdfBytes!);
-      } else {
-        DPrint.log("No PDF generated from scan.");
       }
     } on scanner.DocumentScanException catch (error) {
       DPrint.log("Document Scan Error: ${error.reason}");
@@ -67,16 +100,18 @@ class ScanDocController extends GetxController {
 
       final File file = File(filePath);
       await file.writeAsBytes(pdfBytes);
+      final int size = await file.length();
 
       final newDoc = ScannedDocument(
         id: timestamp,
-        name: "Document $timestamp",
+        name: "Scan $timestamp",
         filePath: filePath,
         dateTime: DateTime.now(),
+        fileSize: size,
       );
 
       await _hiveService.saveDocument(newDoc.toMap());
-      loadDocuments(); // Refresh the list
+      await loadDocuments();
       DPrint.log("Document saved successfully at $filePath");
     } catch (e) {
       DPrint.log("Error saving document: $e");
@@ -90,7 +125,7 @@ class ScanDocController extends GetxController {
         await file.delete();
       }
       await _hiveService.deleteDocument(doc.id);
-      loadDocuments();
+      await loadDocuments();
     } catch (e) {
       DPrint.log("Error deleting document: $e");
     }

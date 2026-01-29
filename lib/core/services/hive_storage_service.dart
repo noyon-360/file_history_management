@@ -81,6 +81,18 @@ class HiveStorageService {
     return rawDocs.map((e) => Map<String, dynamic>.from(e)).toList();
   }
 
+  Future<void> updateDocument(Map<String, dynamic> docMap) async {
+    final List<dynamic> currentDocs = _box.get(_docsKey, defaultValue: []);
+    final index = currentDocs.indexWhere(
+      (element) => element['id'] == docMap['id'],
+    );
+    if (index != -1) {
+      currentDocs[index] = docMap;
+      await _box.put(_docsKey, currentDocs);
+      DPrint.log("Hive: Updated document with id ${docMap['id']}");
+    }
+  }
+
   Future<void> deleteDocument(String id) async {
     final List<dynamic> currentDocs = _box.get(_docsKey, defaultValue: []);
     currentDocs.removeWhere((element) => element['id'] == id);
