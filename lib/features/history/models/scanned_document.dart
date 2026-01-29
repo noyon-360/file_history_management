@@ -5,6 +5,7 @@ class ScannedDocument {
   final DateTime dateTime;
   final bool isFavorite;
   final int fileSize;
+  final String? contentHash; // For duplicate detection
   final DateTime? deletedAt;
 
   ScannedDocument({
@@ -14,6 +15,7 @@ class ScannedDocument {
     required this.dateTime,
     this.isFavorite = false,
     this.fileSize = 0,
+    this.contentHash,
     this.deletedAt,
   });
 
@@ -28,6 +30,7 @@ class ScannedDocument {
       'dateTime': dateTime.millisecondsSinceEpoch,
       'isFavorite': isFavorite,
       'fileSize': fileSize,
+      'contentHash': contentHash,
       'deletedAt': deletedAt?.millisecondsSinceEpoch,
     };
   }
@@ -40,6 +43,7 @@ class ScannedDocument {
       dateTime: DateTime.fromMillisecondsSinceEpoch(map['dateTime'] ?? 0),
       isFavorite: map['isFavorite'] ?? false,
       fileSize: map['fileSize'] ?? 0,
+      contentHash: map['contentHash'],
       deletedAt: map['deletedAt'] != null
           ? DateTime.fromMillisecondsSinceEpoch(map['deletedAt'])
           : null,
@@ -51,6 +55,7 @@ class ScannedDocument {
     bool? isFavorite,
     DateTime? deletedAt,
     bool clearDeletedAt = false,
+    String? contentHash,
   }) {
     return ScannedDocument(
       id: id,
@@ -59,6 +64,7 @@ class ScannedDocument {
       dateTime: dateTime,
       isFavorite: isFavorite ?? this.isFavorite,
       fileSize: fileSize,
+      contentHash: contentHash ?? this.contentHash,
       deletedAt: clearDeletedAt ? null : (deletedAt ?? this.deletedAt),
     );
   }
