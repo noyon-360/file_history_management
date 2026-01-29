@@ -1,5 +1,4 @@
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:flutx_core/flutx_core.dart';
 import 'package:get/get.dart';
@@ -7,13 +6,14 @@ import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:simplest_document_scanner/simplest_document_scanner.dart'
     as scanner;
-
+import 'package:crypto/crypto.dart';
 import '../models/scanned_document.dart';
 import '../../../core/services/hive_storage_service.dart';
 
 class ScanDocController extends GetxController {
   final _hiveService = HiveStorageService();
   final RxList<ScannedDocument> scannedDocumentsList = <ScannedDocument>[].obs;
+  final RxBool isSaving = false.obs;
 
   @override
   void onInit() {
@@ -86,6 +86,8 @@ class ScanDocController extends GetxController {
   }
 
   void _showNameInputDialog(List<int> pdfBytes) {
+    if (isSaving.value) return;
+
     final TextEditingController nameController = TextEditingController(
       text: "Scan ${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}",
     );
@@ -102,6 +104,7 @@ class ScanDocController extends GetxController {
           autofocus: true,
         ),
         actions: [
+          TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
           TextButton(
             onPressed: () {
               Get.back();
@@ -116,7 +119,24 @@ class ScanDocController extends GetxController {
   }
 
   Future<void> _saveDocument(List<int> pdfBytes, {String? customName}) async {
+    if (isSaving.value) return;
+
     try {
+      isSaving.value = true;
+
+      // Calculate hash for duplicate detection
+      final hash = sha256.convert(pdfBytes).toString();
+
+      // Check for duplicates
+      final isDuplicate = scannedDocumentsList.any(
+        (doc) => doc.contentHash == hash,
+      );
+      if (isDuplicate) {
+        _showDuplicateWarning();
+        isSaving.value = false;
+        return;
+      }
+
       final directory = await getApplicationDocumentsDirectory();
       final String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
       final String fileName = "Scan_$timestamp.pdf";
@@ -134,6 +154,7 @@ class ScanDocController extends GetxController {
         filePath: filePath,
         dateTime: DateTime.now(),
         fileSize: size,
+        contentHash: hash,
       );
 
       await _hiveService.saveDocument(newDoc.toMap());
@@ -141,7 +162,20 @@ class ScanDocController extends GetxController {
       DPrint.log("Document saved successfully at $filePath");
     } catch (e) {
       DPrint.log("Error saving document: $e");
+    } finally {
+      isSaving.value = false;
     }
+  }
+
+  void _showDuplicateWarning() {
+    Get.snackbar(
+      "Duplicate Document",
+      "This document has already been saved in your history.",
+      snackPosition: SnackPosition.BOTTOM,
+      backgroundColor: Colors.orange.withOpacity(0.8),
+      colorText: Colors.white,
+      margin: const EdgeInsets.all(16),
+    );
   }
 
   Future<void> deleteDocument(ScannedDocument doc) async {
