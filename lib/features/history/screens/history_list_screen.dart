@@ -1,3 +1,4 @@
+import 'package:file_history_management/core/constants/app_colors.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
@@ -17,8 +18,7 @@ class HistoryListScreen extends GetView<ScanDocController> {
       length: 2,
       child: Scaffold(
         appBar: AppBar(
-          title: const Text("Scan History"),
-          centerTitle: true,
+          title: const Text("Welcome to Scanner"),
           actions: [
             IconButton(
               icon: const Icon(Icons.search),
@@ -115,7 +115,9 @@ class HistoryListScreen extends GetView<ScanDocController> {
                   IconButton(
                     icon: Icon(
                       doc.isFavorite ? Icons.star : Icons.star_border,
-                      color: doc.isFavorite ? Colors.orange : Colors.grey,
+                      color: doc.isFavorite
+                          ? AppColors.primaryWhite
+                          : AppColors.primaryGray,
                     ),
                     onPressed: () => controller.toggleFavorite(doc),
                   ),

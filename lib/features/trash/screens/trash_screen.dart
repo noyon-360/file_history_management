@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import '../../../core/constants/app_colors.dart';
 import '../controllers/trash_controller.dart';
 import '../../history/models/scanned_document.dart';
 
@@ -58,7 +59,10 @@ class TrashScreen extends GetView<TrashController> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      icon: const Icon(Icons.restore, color: Colors.green),
+                      icon: const Icon(
+                        Icons.restore,
+                        color: AppColors.primaryWhite,
+                      ),
                       onPressed: () => controller.restoreFromTrash(doc),
                       tooltip: "Restore",
                     ),
