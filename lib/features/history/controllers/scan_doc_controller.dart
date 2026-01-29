@@ -128,7 +128,9 @@ class ScanDocController extends GetxController {
 
       final newDoc = ScannedDocument(
         id: timestamp,
-        name: customName ?? "Scan $timestamp",
+        name: (customName == null || customName.trim().isEmpty)
+            ? "Document $timestamp"
+            : customName,
         filePath: filePath,
         dateTime: DateTime.now(),
         fileSize: size,
