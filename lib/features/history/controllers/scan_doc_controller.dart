@@ -1,7 +1,9 @@
 import 'dart:io';
 
+import 'package:flutter/material.dart';
 import 'package:flutx_core/flutx_core.dart';
 import 'package:get/get.dart';
+import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:simplest_document_scanner/simplest_document_scanner.dart'
     as scanner;
@@ -82,7 +84,7 @@ class ScanDocController extends GetxController {
       }
 
       if (document.hasPdf && document.pdfBytes != null) {
-        await _saveDocument(document.pdfBytes!);
+        _showNameInputDialog(document.pdfBytes!);
       }
     } on scanner.DocumentScanException catch (error) {
       DPrint.log("Document Scan Error: ${error.reason}");
@@ -91,7 +93,37 @@ class ScanDocController extends GetxController {
     }
   }
 
-  Future<void> _saveDocument(List<int> pdfBytes) async {
+  void _showNameInputDialog(List<int> pdfBytes) {
+    final TextEditingController nameController = TextEditingController(
+      text: "Scan ${DateFormat('yyyyMMdd_HHmmss').format(DateTime.now())}",
+    );
+
+    Get.dialog(
+      AlertDialog(
+        title: const Text("Save Document"),
+        content: TextField(
+          controller: nameController,
+          decoration: const InputDecoration(
+            labelText: "Document Name",
+            hintText: "Enter name here...",
+          ),
+          autofocus: true,
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              Get.back();
+              _saveDocument(pdfBytes, customName: nameController.text.trim());
+            },
+            child: const Text("Save"),
+          ),
+        ],
+      ),
+      barrierDismissible: false,
+    );
+  }
+
+  Future<void> _saveDocument(List<int> pdfBytes, {String? customName}) async {
     try {
       final directory = await getApplicationDocumentsDirectory();
       final String timestamp = DateTime.now().millisecondsSinceEpoch.toString();
@@ -104,7 +136,7 @@ class ScanDocController extends GetxController {
 
       final newDoc = ScannedDocument(
         id: timestamp,
-        name: "Scan $timestamp",
+        name: customName ?? "Scan $timestamp",
         filePath: filePath,
         dateTime: DateTime.now(),
         fileSize: size,
