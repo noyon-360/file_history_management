@@ -15,6 +15,8 @@ class ScanDocController extends GetxController {
   final _hiveService = HiveStorageService();
   final RxList<ScannedDocument> scannedDocumentsList = <ScannedDocument>[].obs;
   final RxList<ScannedDocument> filteredDocumentsList = <ScannedDocument>[].obs;
+  final RxList<ScannedDocument> filteredFavoriteDocumentsList =
+      <ScannedDocument>[].obs;
   final RxString searchQuery = "".obs;
 
   @override
@@ -46,17 +48,19 @@ class ScanDocController extends GetxController {
   }
 
   void _filterDocuments() {
-    if (searchQuery.isEmpty) {
+    final query = searchQuery.value.toLowerCase();
+    if (query.isEmpty) {
       filteredDocumentsList.value = scannedDocumentsList;
     } else {
       filteredDocumentsList.value = scannedDocumentsList
-          .where(
-            (doc) => doc.name.toLowerCase().contains(
-              searchQuery.value.toLowerCase(),
-            ),
-          )
+          .where((doc) => doc.name.toLowerCase().contains(query))
           .toList();
     }
+
+    // Update favorites based on search results
+    filteredFavoriteDocumentsList.value = filteredDocumentsList
+        .where((doc) => doc.isFavorite)
+        .toList();
   }
 
   Future<void> toggleFavorite(ScannedDocument doc) async {
