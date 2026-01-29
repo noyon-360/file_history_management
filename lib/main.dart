@@ -5,8 +5,8 @@ import 'package:get/get.dart';
 import 'core/init/app_initializer.dart';
 import 'features/history/screens/history_list_screen.dart';
 
-void main() {
-  AppInitializer.initializeApp();
+void main() async {
+  await AppInitializer.initializeApp();
   runApp(const MyApp());
 }
 

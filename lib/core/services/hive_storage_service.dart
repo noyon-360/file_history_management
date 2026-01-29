@@ -13,6 +13,7 @@ class HiveStorageService {
 
   // Default box name (you can change or make it configurable)
   static const String _defaultBox = 'app_box';
+  static const String _docsKey = 'scanned_documents';
 
   late Box _box;
 
@@ -65,6 +66,26 @@ class HiveStorageService {
   Future<void> clear() async {
     await _box.clear();
     DPrint.log("Hive: Cleared all data");
+  }
+
+  /// Scanned Documents specific methods
+  Future<void> saveDocument(Map<String, dynamic> docMap) async {
+    final List<dynamic> currentDocs = _box.get(_docsKey, defaultValue: []);
+    currentDocs.add(docMap);
+    await _box.put(_docsKey, currentDocs);
+    DPrint.log("Hive: Saved new document");
+  }
+
+  List<Map<String, dynamic>> getAllDocuments() {
+    final List<dynamic> rawDocs = _box.get(_docsKey, defaultValue: []);
+    return rawDocs.map((e) => Map<String, dynamic>.from(e)).toList();
+  }
+
+  Future<void> deleteDocument(String id) async {
+    final List<dynamic> currentDocs = _box.get(_docsKey, defaultValue: []);
+    currentDocs.removeWhere((element) => element['id'] == id);
+    await _box.put(_docsKey, currentDocs);
+    DPrint.log("Hive: Deleted document with id $id");
   }
 
   /// Close all boxes (call on app close if needed)

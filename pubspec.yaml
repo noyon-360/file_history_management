@@ -18,6 +18,9 @@ dependencies:
   hive_flutter: ^1.1.0
   flutter_secure_storage: ^10.0.0
   simplest_document_scanner: ^1.1.4
+  path_provider: ^2.1.1
+  open_filex: ^4.3.4
+  intl: ^0.18.1
 
 dev_dependencies:
   flutter_test:
