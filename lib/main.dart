@@ -2,9 +2,11 @@ import 'package:file_history_management/core/config/app_theme.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import 'core/init/app_initializer.dart';
 import 'features/history/screens/history_list_screen.dart';
 
 void main() {
+  AppInitializer.initializeApp();
   runApp(const MyApp());
 }
 
