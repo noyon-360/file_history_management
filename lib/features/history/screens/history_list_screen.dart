@@ -4,7 +4,9 @@ import 'package:intl/intl.dart';
 import 'package:open_filex/open_filex.dart';
 
 import '../controllers/scan_doc_controller.dart';
-import '../../../core/models/scanned_document.dart';
+import '../../search/screens/search_history_delegate.dart';
+import '../../trash/screens/trash_screen.dart';
+import '../../trash/controllers/trash_controller.dart';
 
 class HistoryListScreen extends GetView<ScanDocController> {
   const HistoryListScreen({super.key});
@@ -17,40 +19,26 @@ class HistoryListScreen extends GetView<ScanDocController> {
         appBar: AppBar(
           title: const Text("Scan History"),
           centerTitle: true,
-          bottom: PreferredSize(
-            preferredSize: const Size.fromHeight(110),
-            child: Column(
-              children: [
-                Padding(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-                  child: TextField(
-                    onChanged: (value) => controller.searchQuery.value = value,
-                    decoration: InputDecoration(
-                      hintText: "Search files...",
-                      prefixIcon: const Icon(Icons.search),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(30),
-                        borderSide: BorderSide.none,
-                      ),
-                      filled: true,
-                      contentPadding: const EdgeInsets.symmetric(vertical: 0),
-                    ),
-                  ),
-                ),
-                const TabBar(
-                  // indicatorColor: Colors.blue,
-                  indicatorSize: TabBarIndicatorSize.label,
-                  dividerColor: Colors.transparent,
-                  tabs: [
-                    Tab(text: "All Docs"),
-                    Tab(text: "Favorites"),
-                  ],
-                ),
-              ],
+          actions: [
+            IconButton(
+              icon: const Icon(Icons.search),
+              onPressed: () => showSearch(
+                context: context,
+                delegate: SearchHistoryDelegate(),
+              ),
             ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline),
+              onPressed: () => Get.to(() => const TrashScreen()),
+            ),
+          ],
+          bottom: const TabBar(
+            indicatorSize: TabBarIndicatorSize.label,
+            dividerColor: Colors.transparent,
+            tabs: [
+              Tab(text: "All Docs"),
+              Tab(text: "Favorites"),
+            ],
           ),
         ),
         floatingActionButton: FloatingActionButton.extended(
@@ -60,35 +48,28 @@ class HistoryListScreen extends GetView<ScanDocController> {
         ),
         body: TabBarView(
           children: [
-            _buildFilteredList(controller.filteredDocumentsList),
-            _buildFilteredList(controller.filteredFavoriteDocumentsList),
+            _buildDocumentList(isFavorites: false),
+            _buildDocumentList(isFavorites: true),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildFilteredList(RxList<ScannedDocument> list) {
+  Widget _buildDocumentList({required bool isFavorites}) {
     return Obx(() {
+      final list = isFavorites
+          ? controller.favoriteDocuments
+          : controller.activeDocuments;
+
       if (list.isEmpty) {
-        return Center(
+        return const Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(
-                controller.searchQuery.isEmpty
-                    ? Icons.history
-                    : Icons.search_off,
-                size: 64,
-                color: Colors.grey,
-              ),
-              const SizedBox(height: 16),
-              Text(
-                controller.searchQuery.isEmpty
-                    ? "No documents found"
-                    : "No results for \"${controller.searchQuery}\"",
-                style: const TextStyle(color: Colors.grey),
-              ),
+              Icon(Icons.history, size: 64, color: Colors.grey),
+              SizedBox(height: 16),
+              Text("No documents found", style: TextStyle(color: Colors.grey)),
             ],
           ),
         );
@@ -154,7 +135,7 @@ class HistoryListScreen extends GetView<ScanDocController> {
                       const PopupMenuItem(
                         value: 'delete',
                         child: Text(
-                          "Delete",
+                          "Move to Trash",
                           style: TextStyle(color: Colors.red),
                         ),
                       ),
@@ -230,16 +211,19 @@ class HistoryListScreen extends GetView<ScanDocController> {
   void _showDeleteConfirmation(BuildContext context, dynamic doc) {
     Get.dialog(
       AlertDialog(
-        title: const Text("Delete Document"),
-        content: const Text("Are you sure you want to delete this document?"),
+        title: const Text("Move to Trash?"),
+        content: const Text("This document will be moved to the trash bin."),
         actions: [
           TextButton(onPressed: () => Get.back(), child: const Text("Cancel")),
           TextButton(
             onPressed: () {
-              controller.deleteDocument(doc);
+              Get.find<TrashController>().moveToTrash(doc);
               Get.back();
             },
-            child: const Text("Delete", style: TextStyle(color: Colors.red)),
+            child: const Text(
+              "Move to Trash",
+              style: TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),

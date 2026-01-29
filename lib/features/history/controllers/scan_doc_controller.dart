@@ -8,24 +8,17 @@ import 'package:path_provider/path_provider.dart';
 import 'package:simplest_document_scanner/simplest_document_scanner.dart'
     as scanner;
 
-import '../../../core/models/scanned_document.dart';
+import '../models/scanned_document.dart';
 import '../../../core/services/hive_storage_service.dart';
 
 class ScanDocController extends GetxController {
   final _hiveService = HiveStorageService();
   final RxList<ScannedDocument> scannedDocumentsList = <ScannedDocument>[].obs;
-  final RxList<ScannedDocument> filteredDocumentsList = <ScannedDocument>[].obs;
-  final RxList<ScannedDocument> filteredFavoriteDocumentsList =
-      <ScannedDocument>[].obs;
-  final RxString searchQuery = "".obs;
 
   @override
   void onInit() {
     super.onInit();
     loadDocuments();
-
-    // Automatically filter when search query or list changes
-    everAll([scannedDocumentsList, searchQuery], (_) => _filterDocuments());
   }
 
   Future<void> loadDocuments() async {
@@ -47,26 +40,21 @@ class ScanDocController extends GetxController {
     scannedDocumentsList.sort((a, b) => b.dateTime.compareTo(a.dateTime));
   }
 
-  void _filterDocuments() {
-    final query = searchQuery.value.toLowerCase();
-    if (query.isEmpty) {
-      filteredDocumentsList.value = scannedDocumentsList;
-    } else {
-      filteredDocumentsList.value = scannedDocumentsList
-          .where((doc) => doc.name.toLowerCase().contains(query))
-          .toList();
-    }
+  List<ScannedDocument> get activeDocuments =>
+      scannedDocumentsList.where((doc) => !doc.isDeleted).toList();
 
-    // Update favorites based on search results
-    filteredFavoriteDocumentsList.value = filteredDocumentsList
-        .where((doc) => doc.isFavorite)
-        .toList();
+  List<ScannedDocument> get favoriteDocuments => scannedDocumentsList
+      .where((doc) => !doc.isDeleted && doc.isFavorite)
+      .toList();
+
+  Future<void> updateDocument(ScannedDocument doc) async {
+    await _hiveService.updateDocument(doc.toMap());
+    await loadDocuments();
   }
 
   Future<void> toggleFavorite(ScannedDocument doc) async {
     final updatedDoc = doc.copyWith(isFavorite: !doc.isFavorite);
-    await _hiveService.updateDocument(updatedDoc.toMap());
-    await loadDocuments(); // Refresh list
+    await updateDocument(updatedDoc);
   }
 
   Future<void> scanDocuments() async {

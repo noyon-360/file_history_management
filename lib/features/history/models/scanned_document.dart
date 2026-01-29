@@ -5,6 +5,7 @@ class ScannedDocument {
   final DateTime dateTime;
   final bool isFavorite;
   final int fileSize;
+  final DateTime? deletedAt;
 
   ScannedDocument({
     required this.id,
@@ -13,9 +14,11 @@ class ScannedDocument {
     required this.dateTime,
     this.isFavorite = false,
     this.fileSize = 0,
+    this.deletedAt,
   });
 
   String get extension => filePath.split('.').last.toUpperCase();
+  bool get isDeleted => deletedAt != null;
 
   Map<String, dynamic> toMap() {
     return {
@@ -25,6 +28,7 @@ class ScannedDocument {
       'dateTime': dateTime.millisecondsSinceEpoch,
       'isFavorite': isFavorite,
       'fileSize': fileSize,
+      'deletedAt': deletedAt?.millisecondsSinceEpoch,
     };
   }
 
@@ -36,10 +40,18 @@ class ScannedDocument {
       dateTime: DateTime.fromMillisecondsSinceEpoch(map['dateTime'] ?? 0),
       isFavorite: map['isFavorite'] ?? false,
       fileSize: map['fileSize'] ?? 0,
+      deletedAt: map['deletedAt'] != null
+          ? DateTime.fromMillisecondsSinceEpoch(map['deletedAt'])
+          : null,
     );
   }
 
-  ScannedDocument copyWith({String? name, bool? isFavorite}) {
+  ScannedDocument copyWith({
+    String? name,
+    bool? isFavorite,
+    DateTime? deletedAt,
+    bool clearDeletedAt = false,
+  }) {
     return ScannedDocument(
       id: id,
       name: name ?? this.name,
@@ -47,6 +59,7 @@ class ScannedDocument {
       dateTime: dateTime,
       isFavorite: isFavorite ?? this.isFavorite,
       fileSize: fileSize,
+      deletedAt: clearDeletedAt ? null : (deletedAt ?? this.deletedAt),
     );
   }
 }
