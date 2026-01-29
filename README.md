@@ -1,50 +1,65 @@
 # 📄 Scanner Pro: File & History Management
+## *Flutter Developer Coding Test Implementation*
 
-Welcome to **Scanner Pro**, your premium solution for scanning, organizing, and managing your physical documents in a digital world. This application is designed with a focus on speed, beautiful typography (Manrope), and a robust dark-themed user experience.
-
----
-
-## 🚀 Getting Started
-
-When you launch the application, you'll land on the **Scan History** screen. This is your central hub for all scanned documents.
-
-### 1. 🔍 Scanning a Document
-*   Tap the **"Scan Document"** floating action button at the bottom right.
-*   The camera will open. Align your document within the frame.
-*   Once scanned, you will be prompted to enter a **Document Name**.
-*   *Note: If you don't provide a name, it will automatically save as "Document [Timestamp]".*
-
-### 2. 📁 Managing Your History
-The history screen is divided into two intuitive tabs:
-*   **All Docs**: Every active document you've scanned, sorted by date.
-*   **Favorites**: Quickly access your most important scans by toggling the star icon.
-
-### 3. ⭐ Favorites & Details
-*   **Toggle Favorite**: Tap the **Star Icon** on any document card to add or remove it from your Favorites tab.
-*   **View Details**: Tap the three dots (menu) on a document to see its file path, size, and creation date.
-
-### 4. 🔎 Searching Documents
-*   Tap the **Search Icon** in the top bar.
-*   Start typing the name of the document. The results will filter in real-time.
-*   Tap on a search result to open the PDF immediately.
+Scanner Pro is a premium document scanning and management application built as a solution for the Flutter Developer Coding Test. It leverages modern architecture and sleek design to provide a robust user experience.
 
 ---
 
-## 🗑️ Trash Bin (Safety First)
-
-We've implemented a "Soft Delete" system to prevent accidental data loss.
-
-*   **Move to Trash**: If you no longer need a document, select "Move to Trash" from the document's menu.
-*   **Accessing Trash**: Tap the **Trash Icon** in the top right of the main screen.
-*   **Restore**: Inside the Trash Bin, tap the **Restore Icon** to move the document back to your active history.
-*   **Permanent Delete**: Tap the **Delete Forever** icon to remove the file from your device entirely.
-*   **Clear All**: Use the bin icon in the Trash AppBar to wipe everything permanently at once.
+## � Features Implemented
+1.  **PDF Scanning**: Integrated `simplest_document_scanner` for high-quality document capture.
+2.  **History List**: A reactive history of all scanned documents with real-time updates.
+3.  **Favorites System**: One-tap "Star" functionality to organize important documents in a dedicated tab.
+4.  **Real-time Search**: Instant filtering of documents by name.
+5.  **Soft & Permanent Delete**: A Trash Bin system (Soft Delete) for safety, with permanent deletion and "Clear All" options.
+6.  **File Details**: Comprehensive view of file size, creation date, and storage path.
 
 ---
 
-## 🎨 Visual Experience
-The application uses the **Manrope** font family for a sleek, modern, and readable look. The **Dark Theme** is optimized for reduced eye strain and a premium aesthetic regardless of your environment.
+## 🧠 Technical Considerations (Coding Test Answers)
+
+### 1. Handling Missing Files on Disk
+In the `ScanDocController`, the `loadDocuments()` method performs a safety check. Before populating the list, it verifies `File(path).exists()`. If a file is missing (e.g., deleted manually from the file explorer), the app automatically prunes the Hive registry to keep the database and storage in sync.
+
+### 2. Preventing Duplicate Entries
+Each document is assigned a unique `timestamp` as its ID during the save process. This ID is used as the key in Hive storage, ensuring that every scan is a unique entity. The saving logic also prevents multiple rapid-fire clicks from creating redundant files.
+
+### 3. Optimizing for Large Numbers of Files
+*   **Modular Controllers**: Logic is separated into `ScanDocController` (Repository/Core), `SearchController`, and `TrashController` to reduce the load on a single controller.
+*   **Reactive State**: Using `GetX` with `Obx`, only the specific parts of the UI that change are re-rendered.
+*   **In-Memory Filtering**: For performance, active/favorite/trash lists are computed in memory for instant responsiveness, with a structure ready for lazy-loading/pagination if the dataset grows significantly.
+
+### 4. File Type Detection
+Detection is handled through a combination of the `simplest_document_scanner` result (which generates PDF bytes) and standard path extension metadata. The app specifically targets `.pdf` generation.
+
+### 5. Storage Failure Handling
+All storage operations (saving, deleting, updating) are wrapped in `try-catch` blocks. Failures are logged using `DPrint` and can be easily hooked into UI snackbars or alerts to inform the user if disk space is full or permissions are denied.
 
 ---
 
-*Scan responsibly, stay organized!* 🚀
+## 🚀 Usage Guide
+
+### 1. 🔍 Scanning
+- Tap **"Scan Document"** at the bottom right.
+- Provide a name (or leave empty for a default timestamp-based name).
+
+### 2. 📂 Navigation
+- **All Docs**: Your main history feed.
+- **Favorites**: Tap the **Star Icon** to send a file here.
+- **Search**: Tap the **Magnifying Glass** in the appraisal to find files by name.
+
+### 3. 🗑 Trash Bin
+- Tap the **Trash Icon** in the top right of the main screen to view deleted files.
+- You can **Restore** or **Permanently Delete** items here.
+
+---
+
+## 📦 Tech Stack
+- **Framework**: Flutter
+- **State Management**: GetX
+- **Storage**: Hive (for metadata), `path_provider` (for PDF storage)
+- **Scanning**: `simplest_document_scanner`
+- **Typography**: Manrope (Configured in `pubspec.yaml` and `AppTheme`)
+
+---
+
+*Coded with focus on high-quality architecture and user experience.* 🚀
