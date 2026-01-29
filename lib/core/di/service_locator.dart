@@ -1,22 +1,18 @@
-import 'setup_core.dart';
-import 'setup_repository.dart';
-// import 'setup_usecases.dart';
-// import 'setup_controllers.dart';
-import 'setup_services.dart';
+import 'setup_controllers.dart';
 
 Future<void> setupServiceLocator() async {
   // Core Services
-  await setupCore();
+  // await setupCore();
 
   // Repositories
-  await setupRepository();
+  // await setupRepository();
 
   // Use Cases
   // setupUsecases();
 
   // Controllers
-  // await setupControllers();
+  await setupControllers();
 
   // Services
-  await setupServices();
+  // await setupServices();
 }
